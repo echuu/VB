@@ -13,7 +13,8 @@
 #          d       : (p x 1) diagonal entires of X'X matrix
 #          alpha0  : (p x 1) curr param of var approx of PIP(i) = alpha0[i]
 #          mu0     : (p x 1) mean of coeff_i given that it's in model, mu0[i]
-#          Xr      : (n x 1) X * (alpha0 * mu0)
+#          Xr0     : (n x 1) X * (alpha0 * mu0)
+#          updates : (p x 1) order of variational updates, indices in (1,p)
 
 ## output: updated variational parameters
 #          alpha   : (p x 1) curr param of var approx of PIP(i) = alpha[i]
@@ -23,23 +24,32 @@
 
 vbUpdate = function(X, sigma, sa, logodds, xy, d, alpha0, mu0, Xr0, updates) {
 
+
+    # initialize parameters
+    alpha = alpha0
+    mu    = mu0
+    Xr    = Xr0
+
     # CAVI updates 
     for (j in updates) {
 
-      # posterior variance
-      s = sa * sigma / (sa * d[j] + 1)
+        # posterior variance
+        s = sa * sigma / (sa * d[j] + 1)
 
-      # posterior mean.
-      r     = alpha[j] * mu[j]
-      mu[j] = s / sigma * (xy[j] + d[j] * r - sum(X[, j] * Xr))
+        # posterior mean.
+        r     = alpha[j] * mu[j]
+        mu[j] = s / sigma * (xy[j] + d[j] * r - sum(X[, j] * Xr))
 
-      # variational estimate of the posterior inclusion probability.
-      alpha[j] = sigmoid(logodds[j] + (log(s / (sa * sigma)) + mu[j]^2 / s) / 2)
+        # variational estimate of the posterior inclusion probability.
+        logBF    = (log(s / (sa * sigma)) + mu[j]^2 / s) / 2 # update mistake ?
+        alpha[j] = sigmoid(logodds[j] + logBF)
 
-      # Update Xr = X*r.
-      Xr = Xr + (alpha[j] * mu[j] - r) * X[,j]
+        # Update Xr = X*r.
+        Xr = Xr + (alpha[j] * mu[j] - r) * X[,j]
+        
     } # end of update loop
 
 
+    return(list(alpha = alpha, mu = mu, Xr = Xr))
 
 } # end of vbUpdate() function
