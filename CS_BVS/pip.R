@@ -27,9 +27,26 @@ pip = function(X, y, sigma, sa, logodds, alpha, mu, update.order,
 	                       # at successive iterations, also used to check conv.
 
 
-
+	# main loop
 	for (i in 1:maxiter) {
+		
+		# variational parameters
+		alpha0 = alpha
+		mu0    = mu      # posterior mean of coefficients
+		s0     = s       # posterior variance of coefficients
 
+		# hyperparameters
+		sigma0 = sigma   # variance of residuals
+		sa.old = sa      # prior variance of coefficients
+
+		# compute variational lower bound
+		logw = varLB(Xr, d, y, sigma, alpha, mu, s, logodds, sa)
+
+		# update variational parameters via CAVI, phi = (alpha, mu, s)
+
+
+
+		# carbonetto code doe
 
 
 
