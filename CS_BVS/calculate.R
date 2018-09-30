@@ -53,11 +53,25 @@ logpexp = function(x) {
 }
 
 
+#### ---- sigmoid() ---- ####
+sigmoid = function(x) {
+	return(1 / (1 + exp(-x)))
+} # end of sigmoid() function
+
+
+#### ---- logit() ---- ####
+logit = function(x) {
+	return(log((x + eps) / ((1 - x) + eps)))
+} # end of sigmoid() function
+
+
+
+
 #### ---- logsigmoid() ---- ####
 # same as log(sigmoid(x))
 logsigmoid = function() {
 	return(-logpexp(-x))
-}
+} # end of logsigmoid() function
 
 
 
