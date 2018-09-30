@@ -14,7 +14,6 @@
 #          alpha0  : (p x 1) curr param of var approx of PIP(i) = alpha0[i]
 #          mu0     : (p x 1) mean of coeff_i given that it's in model, mu0[i]
 #          Xr0     : (n x 1) X * (alpha0 * mu0)
-#          updates : (p x 1) order of variational updates, indices in (1,p)
 
 ## output: updated variational parameters
 #          alpha   : (p x 1) curr param of var approx of PIP(i) = alpha[i]
@@ -22,8 +21,11 @@
 #          Xr      : (n x 1) X * (alpha * mu)
 
 
-vbUpdate = function(X, sigma, sa, logodds, xy, d, alpha0, mu0, Xr0, updates) {
+vbUpdate = function(X, sigma, sa, logodds, xy, d, alpha0, mu0, Xr0) {
 
+
+    # order of variational updates -- default: 1:p
+    updates = 1:length(alpha)
 
     # initialize parameters
     alpha = alpha0
