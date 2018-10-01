@@ -4,22 +4,40 @@
 # q_gamma() function -- inner loop of the variational BVS
 
 
-# mu[i], s[i] are the mean/variance of the coefficient given that it's in model
 
-
-## carbonetto documentation seems to have different formulation of sa
-## from the prior variance described in the paper -- check results
+# hyperparameters       : theta = (sigma, sigma * sa, pi), updated via MLE
+# variational parameters: phi   = (alpha, mu, s), updated via cavi
 
 
 ## input:
 #          X       : (n x p) design matrix, n is # of obs, p is # of variables
 #          y       : (n x 1) response vector
 #          sigma   : (1 x 1) variance of the RESIDUAL
-#          sa      : (1 x 1) prior variance of REGRESSION COEFFICIENTS
+#          sa      : (1 x 1) sigma * sa = prior var of REGRESSION COEFFICIENTS
 #          logodds : (p x 1) prior log-odds of inclusion for each variable 
-#          alpha   : (p x 1) curr param of var approx of PIP(i) = alpha0[i]
+#          alpha   : (p x 1) var approx of P(gamma_k = 1 | X, y , theta)
 #          mu      : (p x 1) mean of coeff_i given that it's in model, mu0[i]
 
+## output:
+#          logw    : (iter x 1) variational estimate of the marginal log-like
+#          err     : (iter x 1) diff between alphas between iterations
+#          sigma   : (1 x 1)    
+#          sa      : (1 x 1)    
+#          alpha   : (p x 1)    
+#          mu      : (p x 1)    
+#          s       : (s x 1)
+
+
+## notes on output:
+# q_gamma is called once per iteration of the outer loop, outputting an alpha
+# per iteration. These alpha's (each is a p-dimensional vector) are weighted
+# to get a Monte Carlo estimate of the posterior inclusion probability of each
+# of the regression coefficients
+
+
+## quantities that are calculated within the code:
+#          iter    : number of iterations to achieve convergence
+#          Xr      : efficient way to store X * E(beta | gamma = 1)
 
 
 q_gamma = function(X, y, sigma, sa, logodds, alpha, mu, update.order,
@@ -84,15 +102,18 @@ q_gamma = function(X, y, sigma, sa, logodds, alpha, mu, update.order,
 
 		#### ----                update hyperparameters                ---- ####
 		# ----------------------------------------------------------------------
-
+		## these still need to be derived -- why are these updated after VLB
 		if (update.sigma) {
-			
+			sigma = l2(y - Xr)^2 + sum(d * var_ss(alpha, mu, s)) + 
+			        sum(alpha * (s + mu^2) / sa) / (n + sum(alpha))
+			s     = sa * sigma / (d * sa + 1)
 		}
 
 		if (update.sa) {
-			
+			sa_numer = sa0 * n0 + sum(alpha * (s + mu^2))
+			sa       = sa_numer / (n0 + sigma * sum(alpha))
+			s        = sa * sigma / (d * sa + 1)
 		}
-
 		
 
 		#### ----                  check convergence                   ---- ####
