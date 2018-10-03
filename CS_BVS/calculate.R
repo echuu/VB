@@ -30,6 +30,17 @@ l2 = function(x) {
 } # end of l2() function
 
 
+##### ---- runif_mat() ---- #### 
+# input:  m  : # of rows in matrix
+#         n  : # of cols in matrix
+# output: (m x n) matrix with each element ~ unif(0, 1)
+runif_mat = function (m, n) {
+	return(matrix(runif(m * n), m, n))
+} # end of runif_mat() function
+
+
+
+
 #### ---- var_ss() ---- ####
 # variance of a random variable from from a spike and slab prior
 # Var(X), where X ~ p N(x|mu, sigma) + (1 - p) delta0(x)

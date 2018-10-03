@@ -40,7 +40,9 @@
 #          Xr      : efficient way to store X * E(beta | gamma = 1)
 
 
-q_gamma = function(X, y, sigma, sa, logodds, alpha, mu, update.order,
+# to do: figure out how to modify/interpret roles of n0, sa0
+
+q_gamma = function(X, y, sigma, sa, logodds, alpha, mu,
 	           tol = 1e-4, maxiter = 1e4, verbose = TRUE, 
 	           outer.iter = NULL, update.sigma = TRUE,
 	           update.sa = TRUE, n0 = 10, sa0 = 1) {
@@ -152,8 +154,8 @@ q_gamma = function(X, y, sigma, sa, logodds, alpha, mu, update.order,
 
 	#### ----                    prepare output                        ---- ####
 	# --------------------------------------------------------------------------
-	out = list(logw = logw[1:iter], err = err[1:iter], sigma = sigma,
-		       sa = sa, alpha = alpha, mu = mu, s = s)
+	out = list(vlb = logw[iter], logw = logw[1:iter], err = err[1:iter], 
+		     sigma = sigma, sa = sa, alpha = alpha, mu = mu, s = s, iter = iter)
 
 	return(out)
 
