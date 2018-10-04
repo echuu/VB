@@ -21,6 +21,7 @@ outerloop <- function (X, Z, y, family, weights, resid.vcov, SZy, SZX, sigma,
 
       # Adjust the variational lower bound to account for integral over
       # the regression coefficients corresponding to the covariates.
+      # this calculation isn't relevant to basic model implementation
       out$logw <- out$logw - determinant(crossprod(Z),logarithm = TRUE)$modulus/2
       
       # Compute the posterior mean estimate of the regression
@@ -28,6 +29,8 @@ outerloop <- function (X, Z, y, family, weights, resid.vcov, SZy, SZX, sigma,
       # approximation.
       
       # this calculation is slightly modified version of (9) in C&S (2012)
+      # update: calculation for a different quantity
+      # this calculation isn't relevant to basic model implementation 
       out$mu.cov <- c(with(out, SZy - SZX %*% (alpha*mu)))
   } 
 

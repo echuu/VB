@@ -226,14 +226,18 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
                                  sa[i],logodds[,i],alpha[,i],mu[,i],eta[,i],
                                  update.order,tol,maxiter,verbose,i,update.sigma,
                                  update.sa,optimize.eta,n0,sa0)
+                
                 logw[i]    <- out$logw
+
                 sigma[i]   <- out$sigma
                 sa[i]      <- out$sa
-                mu.cov[,i] <- out$mu.cov
+
+                mu.cov[,i] <- out$mu.cov # not used 
+
                 alpha[,i]  <- out$alpha
                 mu[,i]     <- out$mu
                 s[,i]      <- out$s
-                eta[,i]    <- out$eta
+
             } # end for()
 
             # Choose an initialization common to all the runs of the
@@ -277,7 +281,8 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
             # previous for loop that performs the 'ns' iterations is to find
             # good starting values phi_i so that this for loop has faster
             # convergence (but doesn't the previous for loop do the work of 
-            # this loop?)
+            # this loop?) --- local convergence, so it might be better to start
+            # with better initial values to get faster convergence
 
             alpha[,i]  <- out$alpha
             mu[,i]     <- out$mu
@@ -343,22 +348,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
 
     } # end if ("gaussian") chunk 
 
-    # Add names to some of the outputs.
-    hyper.labels                <- paste("theta",1:ns,sep = "_")
-    rownames(fit$alpha)         <- colnames(X)
-    rownames(fit$mu)            <- colnames(X)
-    rownames(fit$s)             <- colnames(X)
-    names(fit$beta)             <- colnames(X)
-    names(fit$pip)              <- colnames(X)
-    rownames(fit$mu.cov)        <- colnames(Z)
-    names(fit$beta.cov)         <- colnames(Z)
-    rownames(fit$fitted.values) <- rownames(X)
-    colnames(fit$mu.cov)        <- hyper.labels
-    colnames(fit$alpha)         <- hyper.labels
-    colnames(fit$mu)            <- hyper.labels
-    colnames(fit$s)             <- hyper.labels
-    colnames(fit$fitted.values) <- hyper.labels
-    
     if (family == "gaussian") {
         rownames(fit$residuals) <- rownames(X)
         colnames(fit$residuals) <- hyper.labels

@@ -126,6 +126,19 @@ varLB = function(Xr, d, y, sigma, alpha, mu, s, logodds, sa) {f
 } # end of varLB() function
 
 
+#### ---- normalizeLogWeights() ---- ####
+# input:  logw : vector of log probabilities
+# output: vector of normalized probabilities (sum to 1)
+normalizeLogWeights = function(logw) {
+
+	c = max(logw)
+	w = exp(logw - c) # same as dividing by max on regular scale
+
+	return(w / sum(w))
+} # end of normalizeLogWeights()
+
+
+
 
 
 ############## Carbonetto-Stephens Bayesian Variable Selection #################

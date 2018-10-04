@@ -65,38 +65,63 @@ bvs = function(X, y, sigma, sa, logodds,
 	mu    = runif_mat(p, B) 
 
 
+	# scale the dimensions of the (hyper/variational)-parameters so that we can
+	# index into them as vectors
 
-	# carbonetto does something here with a Z matrix, integrating out coeffs
 	
 	#### ----                  preprocess variables                    ---- ####
-	# --------------------------------------------------------------------------	# initialize output variables
+	# --------------------------------------------------------------------------	
+
+	# initialize output variables
 	logw = rep(0, B)                   # var. estimate of marginal log-like
 	s    = matrix(0, p, B)             # variance of reg coeffs, stored col-wise
-	# mu.cov = matrix(0, ncol(Z), B)   # posterior mean estimates
-	    # how is mu.cov different from mu matrix declared in previous section
-
-
 
 
     #### ----                       outer loop                         ---- ####
 	# --------------------------------------------------------------------------
+	
+	# (1) If initialization of the parameters is not provided in the input, 
+	#     we iterate through the variational updates to find a better 
+	#     initialization for the variational parameters. The values we use to
+	#     run CAVI for this chunk are generated randomly when we defined above
+	for (i in 1:B) {
+
+
+
+		## find the iteration with parameters that maximized the VLB
+		## store these parameters in alpha, mu, sigma (*), sa (*)
+		## (*): if update.sigma == TRUE
+
+	} # end of initilization for()
+
+
+
+	# (2) Using the initialization chosen in step (1), we run CAVI.
+	#     
 	for (i in 1:B) {
 
 		# inner loop -- optimize var lower bound
-		cavi = q_gamma(X, y, sigma, sa, logodds, alpha, mu) 
+		if (length(logodds) == 1) {
+			logodds = rep(logodds, p)
+		}
 
+		## details of these updates still need to be figured out..
+		## seems that if we have initialize.params == TRUE, then all starting
+		## values of alpha[,i], mu[,i] will all be the same, which would result
+		## in the same updates stored in each iteration, which would defeat the
+		## purpose of iterating through cavi B times
 
-		# compute posterior mean estimate of the regression coefficients
-		# for the covariates under the current variational approximation
-		# add posterior mean as a new parameter to output
-		post_mean = c()
-		cavi = out %>% mutate(post_mean = post_mean)
+		cavi = q_gamma(X, y, sigma[i] sa[i], logodds[i], alpha[,i], mu[,i]) 
 
+		#####       ----   store updates for i-th iteration    ----         ####
 
-		# store updates for i-th iteration
-		logw[i]    = cavi$vlb
-		sigma[i]   = cavi$sigma
-		sa[i]      = cavi$sa
+		logw[i]    = cavi$vlb       # variational lower bound
+
+		## hyperparameter updates -- have to explicitly ask for update via input
+		sigma[i]   = cavi$sigma     # changes iff update.sigma == TRUE
+		sa[i]      = cavi$sa        # changes iff update.sa    == TRUE
+
+		# variational parameter updates
 		alpha[,i]  = cavi$alpha
 		mu[,i]     = cavi$mu
 		s[,i]      = cavi$s
@@ -106,12 +131,17 @@ bvs = function(X, y, sigma, sa, logodds,
 		# the calculations for posterior mean/variance that are described in the
 		# simplest model		
 
-	} # end for()
+	} # end of main for() -- logw, alpha, mu are updated, ready for PIP calc.
 
 
+	# (normalized) weights, PIP, betas (all p-dim vectors)
+	w    = normalizeLogWeights(logw)  #                    (B x 1)
+	pip  = c(alpha %*% w)             # (p x B) (B x 1) -> (p x 1)
+    beta = c((alpha * mu) %*% w)      # (n x B) (B x 1) -> (p x 1)
 
-	# prepare output
-
+	# Prepare output
+	output = list(pip = pip, beta = beta)
+	return(output)
 
 } # end of bvs() function
 

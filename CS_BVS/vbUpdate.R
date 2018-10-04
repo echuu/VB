@@ -2,7 +2,7 @@
 
 # vbUpdate() performs ONE iteration of the CAVI update to
 # maximize the variational lower bound for Bayesian variable 
-# selection in linear regression.
+# selection in linear regression. This function is called by q_gamma()
 
 ## input:
 #          X       : (n x p) design matrix, n is # of obs, p is # of variables
@@ -43,7 +43,7 @@ vbUpdate = function(X, sigma, sa, logodds, xy, d, alpha0, mu0, Xr0) {
         mu[j] = s / sigma * (xy[j] + d[j] * r - sum(X[, j] * Xr))
 
         # variational estimate of the posterior inclusion probability.
-        logBF    = (log(s / (sa * sigma)) + mu[j]^2 / s) / 2 # update mistake ?
+        logBF    = (log(s / (sa * sigma)) + mu[j]^2 / s) / 2 # double check this update
         alpha[j] = sigmoid(logodds[j] + logBF)
 
         # Update Xr = X*r.

@@ -4,7 +4,6 @@
 # q_gamma() function -- inner loop of the variational BVS
 
 
-
 # hyperparameters       : theta = (sigma, sigma * sa, pi), updated via MLE
 # variational parameters: phi   = (alpha, mu, s), updated via cavi
 
@@ -82,7 +81,7 @@ q_gamma = function(X, y, sigma, sa, logodds, alpha, mu,
 
 		#### ----           compute variational lower bound            ---- ####
 		# ----------------------------------------------------------------------
-		logw = varLB(Xr, d, y, sigma, alpha, mu, s, logodds, sa)
+		logw = varLB(Xr, d, y, sigma, alpha, mu, s, logodds, sa) # calculate.R
 
 
 		#### ----         perform one cycle of cavi updates            ---- ####
