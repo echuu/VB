@@ -12,10 +12,7 @@
 #          sa      : (1 x 1) PRIOR variance of regression coefficients
 #          logodds : (p x 1) prior log-odds of inclusion for each variable 
 
-
-## global params
 library(dplyr)
-
 
 
 bvs = function(X, y, sigma, sa, logodds,
@@ -40,6 +37,19 @@ bvs = function(X, y, sigma, sa, logodds,
 	#### ----                  preprocess variables                    ---- ####
 	# --------------------------------------------------------------------------
 
+	# create intercept
+	Z = matrix(1, n, 1)
+
+    # Adjust the inputs X and y so that the linear effects of the
+    # covariates (Z) are removed. This is equivalent to integrating
+    # out the regression coefficients corresponding to the covariates
+    # with respect to an improper, uniform prior.	
+
+    new_Xy = processXy(X, y, Z)
+
+
+
+
 
 	#### ----            initialize variational parameters             ---- ####
 	# --------------------------------------------------------------------------
@@ -49,8 +59,9 @@ bvs = function(X, y, sigma, sa, logodds,
 
 
 	# carbonetto does something here with a Z matrix, integrating out coeffs
-
-	# initialize storage for outputs
+	
+	#### ----                  preprocess variables                    ---- ####
+	# --------------------------------------------------------------------------	# initialize output variables
 	logw = rep(0, B)                   # var. estimate of marginal log-like
 	s    = matrix(0, p, B)             # variance of reg coeffs, stored col-wise
 	# mu.cov = matrix(0, ncol(Z), B)   # posterior mean estimates
@@ -62,7 +73,6 @@ bvs = function(X, y, sigma, sa, logodds,
     #### ----                       outer loop                         ---- ####
 	# --------------------------------------------------------------------------
 	for (i in 1:B) {
-
 
 		# inner loop -- optimize var lower bound
 		cavi = q_gamma(X, y, sigma, sa, logodds, alpha, mu) 
