@@ -33,6 +33,8 @@ bvs = function(X, y, sigma, sa, logodds,
 	# --------------------------------------------------------------------------
 	checkInitialInput(X, y, sigma, sa, logodds, n, p)
 
+	y = c(as.double(y))   # y must be in this form and not stored as matrix,
+	                      # else processXy() function will complain about dim.
 
 	#### ----                  preprocess variables                    ---- ####
 	# --------------------------------------------------------------------------
@@ -47,9 +49,15 @@ bvs = function(X, y, sigma, sa, logodds,
 
     new_Xy = processXy(X, y, Z)
 
+    # for initial applications, Z will be the intercept, so the resulting X will
+    # just be the centered version, and y = y - mean(y)
+    X   = new_Xy$X
+    y   = new_Xy$y 
+    
+    SZX = new_Xy$SZX    # only used if there are additional covariates
+	SZy = new_Xy$SZy    # only used if there are additional covariates
 
-
-
+    rm(new_Xy)
 
 	#### ----            initialize variational parameters             ---- ####
 	# --------------------------------------------------------------------------

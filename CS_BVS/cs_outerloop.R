@@ -26,8 +26,9 @@ outerloop <- function (X, Z, y, family, weights, resid.vcov, SZy, SZX, sigma,
       # Compute the posterior mean estimate of the regression
       # coefficients for the covariates under the current variational
       # approximation.
+      
       # this calculation is slightly modified version of (9) in C&S (2012)
-      out$mu.cov <- c(with(out,SZy - SZX %*% (alpha*mu)))
+      out$mu.cov <- c(with(out, SZy - SZX %*% (alpha*mu)))
   } 
 
   numiter  <- length(out$logw)

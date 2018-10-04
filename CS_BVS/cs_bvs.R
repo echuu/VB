@@ -149,30 +149,30 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
   # -----------------------
   if (family == "gaussian") {
     
-    # Adjust the inputs X and y so that the linear effects of the
-    # covariates (Z) are removed. This is equivalent to integrating
-    # out the regression coefficients corresponding to the covariates
-    # with respect to an improper, uniform prior.
-    out <- remove.covariate.effects(X,Z,y)
-    X   <- out$X
-    y   <- out$y
-    SZy <- out$SZy
-    SZX <- out$SZX
-    rm(out)
+      # Adjust the inputs X and y so that the linear effects of the
+      # covariates (Z) are removed. This is equivalent to integrating
+      # out the regression coefficients corresponding to the covariates
+      # with respect to an improper, uniform prior.
+      out <- remove.covariate.effects(X,Z,y)
+      X   <- out$X
+      y   <- out$y
+      SZy <- out$SZy
+      SZX <- out$SZX
+      rm(out)
 
   } # end of if (gaussian)
 
   # Add row and column names to X if they are not provided.
   if (is.null(rownames(X)))
-    rownames(X) <- 1:n
+      rownames(X) <- 1:n
   if (is.null(colnames(X)))
-    colnames(X) <- paste0("X",1:p)
+      colnames(X) <- paste0("X",1:p)
 
   # Add column names to Z if they are not already provided.
   if (is.null(colnames(Z)) & ncol(Z) > 1)
-    colnames(Z) <- c("(Intercept)",paste0("Z",1:(ncol(Z) - 1)))
+      colnames(Z) <- c("(Intercept)",paste0("Z",1:(ncol(Z) - 1)))
   else
-    colnames(Z)[1] <- "(Intercept)"
+      colnames(Z)[1] <- "(Intercept)"
   
   # (4) INITIALIZE STORAGE FOR THE OUTPUTS
   # --------------------------------------
@@ -189,93 +189,87 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
   # -------------------------------------------------
   if (ns == 1) {
 
-    # Find a set of parameters that locally minimize the K-L
-    # divergence between the approximating distribution and the exact
-    # posterior.
+      # Find a set of parameters that locally minimize the K-L
+      # divergence between the approximating distribution and the exact
+      # posterior.
 
-    out      <- outerloop(X,Z,y,family,weights,resid.vcov,SZy,SZX,c(sigma),
-                          c(sa),c(logodds),c(alpha),c(mu),c(eta),update.order,
-                          tol,maxiter,verbose,NULL,update.sigma,update.sa,
-                          optimize.eta,n0,sa0)
-    logw     <- out$logw
-    sigma    <- out$sigma
-    sa       <- out$sa
-    mu.cov[] <- out$mu.cov
-    alpha[]  <- out$alpha
-    mu[]     <- out$mu
-    s[]      <- out$s
-    eta[]    <- out$eta
-    if (verbose)
-      cat("\n")
+      out      <- outerloop(X,Z,y,family,weights,resid.vcov,SZy,SZX,c(sigma),
+                            c(sa),c(logodds),c(alpha),c(mu),c(eta),update.order,
+                            tol,maxiter,verbose,NULL,update.sigma,update.sa,
+                            optimize.eta,n0,sa0)
+      logw     <- out$logw
+      sigma    <- out$sigma
+      sa       <- out$sa
+      mu.cov[] <- out$mu.cov
+      alpha[]  <- out$alpha
+      mu[]     <- out$mu
+      s[]      <- out$s
+      eta[]    <- out$eta
+
   } else {
 
-    # If a good initialization isn't already provided, find a good
-    # initialization for the variational parameters. Repeat for each
-    # candidate setting of the hyperparameters.
-    if (initialize.params) {
-      if (verbose) {
-        cat("Finding best initialization for",ns,"combinations of",
-            "hyperparameters.\n");
-        cat("-iteration-   variational    max.   incl variance params\n");
-        cat("outer inner   lower bound  change   vars   sigma      sa\n");
-      }
+      # If a good initialization isn't already provided, find a good
+      # initialization for the variational parameters. Repeat for each
+      # candidate setting of the hyperparameters.
+      if (initialize.params) {
 
-      # Repeat for each setting of the hyperparameters.
+          # Repeat for each setting of the hyperparameters.
+          for (i in 1:ns) {
+              out <- outerloop(X,Z,y,family,weights,resid.vcov,SZy,SZX,sigma[i],
+                               sa[i],logodds[,i],alpha[,i],mu[,i],eta[,i],
+                               update.order,tol,maxiter,verbose,i,update.sigma,
+                               update.sa,optimize.eta,n0,sa0)
+              logw[i]    <- out$logw
+              sigma[i]   <- out$sigma
+              sa[i]      <- out$sa
+              mu.cov[,i] <- out$mu.cov
+              alpha[,i]  <- out$alpha
+              mu[,i]     <- out$mu
+              s[,i]      <- out$s
+              eta[,i]    <- out$eta
+          } # end for()
+
+          # Choose an initialization common to all the runs of the
+          # coordinate ascent algorithm. This is chosen from the
+          # hyperparameters with the highest variational estimate of the
+          # marginal likelihood.
+          i     <- which.max(logw)
+          alpha <- rep.col(alpha[,i],ns)
+          mu    <- rep.col(mu[,i],ns)
+          if (optimize.eta)
+            eta = rep.col(eta[,i],ns)
+          if (update.sigma)
+            sigma = rep(sigma[i],ns)
+          if (update.sa)
+            sa = rep(sa[i],ns)
+
+      } # end of if (initialize.param) chunk
+
+      # Compute a variational approximation to the posterior distribution
+      # for each candidate setting of the hyperparameters.
+      
+      # For each setting of the hyperparameters, find a set of
+      # parameters that locally minimize the K-L divergence between the
+      # approximating distribution and the exact posterior.
       for (i in 1:ns) {
-        out <- outerloop(X,Z,y,family,weights,resid.vcov,SZy,SZX,sigma[i],
-                         sa[i],logodds[,i],alpha[,i],mu[,i],eta[,i],
-                         update.order,tol,maxiter,verbose,i,update.sigma,
-                         update.sa,optimize.eta,n0,sa0)
-        logw[i]    <- out$logw
-        sigma[i]   <- out$sigma
-        sa[i]      <- out$sa
-        mu.cov[,i] <- out$mu.cov
-        alpha[,i]  <- out$alpha
-        mu[,i]     <- out$mu
-        s[,i]      <- out$s
-        eta[,i]    <- out$eta
+          out <- outerloop(X, Z, y, family, weights, resid.vcov, SZy, SZX, 
+                           sigma[i],sa[i], logodds[,i], alpha[,i], mu[,i], 
+                           eta[,i], update.order, tol, maxiter, verbose, i,
+                           update.sigma, update.sa, optimize.eta, n0, sa0)
+          logw[i]    <- out$logw
+          sigma[i]   <- out$sigma
+          sa[i]      <- out$sa
+          mu.cov[,i] <- out$mu.cov # these correspond to the betas, not in 
+                                   # most basic model -- exclude? PIP does not
+                                   # involve these in the calculation (below)
+                                   # something to clarify **********************
+          alpha[,i]  <- out$alpha
+          mu[,i]     <- out$mu
+          s[,i]      <- out$s
+          eta[,i]    <- out$eta
       }
-      if (verbose)
-        cat("\n")
 
-      # Choose an initialization common to all the runs of the
-      # coordinate ascent algorithm. This is chosen from the
-      # hyperparameters with the highest variational estimate of the
-      # marginal likelihood.
-      i     <- which.max(logw)
-      alpha <- rep.col(alpha[,i],ns)
-      mu    <- rep.col(mu[,i],ns)
-      if (optimize.eta)
-        eta <- rep.col(eta[,i],ns)
-      if (update.sigma)
-        sigma <- rep(sigma[i],ns)
-      if (update.sa)
-        sa <- rep(sa[i],ns)
-    }
-
-    # Compute a variational approximation to the posterior distribution
-    # for each candidate setting of the hyperparameters.
-    
-    # For each setting of the hyperparameters, find a set of
-    # parameters that locally minimize the K-L divergence between the
-    # approximating distribution and the exact posterior.
-    for (i in 1:ns) {
-      out <- outerloop(X,Z,y,family,weights,resid.vcov,SZy,SZX,sigma[i],sa[i],
-                       logodds[,i],alpha[,i],mu[,i],eta[,i],update.order,tol,
-                       maxiter,verbose,i,update.sigma,update.sa,optimize.eta,
-                       n0,sa0)
-      logw[i]    <- out$logw
-      sigma[i]   <- out$sigma
-      sa[i]      <- out$sa
-      mu.cov[,i] <- out$mu.cov
-      alpha[,i]  <- out$alpha
-      mu[,i]     <- out$mu
-      s[,i]      <- out$s
-      eta[,i]    <- out$eta
-    }
-    if (verbose)
-      cat("\n")
-  }
+  } # end of main if (ns == 1), else() chunks
 
   # (6) CREATE FINAL OUTPUT
   # -----------------------
@@ -283,78 +277,59 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
   # inclusion probabilities (PIPs) and mean regression coefficients
   # averaged over the hyperparameter settings.
   if (ns == 1) {
-    w        <- 1
-    pip      <- c(alpha)
-    beta     <- c(alpha*mu)
-    beta.cov <- c(mu.cov)
+      w        <- 1
+      pip      <- c(alpha)
+      beta     <- c(alpha*mu)
+      beta.cov <- c(mu.cov)
   } else {
-    w        <- normalizelogweights(logw)
-    pip      <- c(alpha %*% w)
-    beta     <- c((alpha*mu) %*% w)
-    beta.cov <- c(mu.cov %*% w)
+      w        <- normalizelogweights(logw)
+      pip      <- c(alpha %*% w)
+      beta     <- c((alpha*mu) %*% w)
+      beta.cov <- c(mu.cov %*% w)
   }
 
   if (family == "gaussian") {
-    fit <- list(family = family,n0 = n0,sa0 = sa0,mu.cov = mu.cov,
-                update.sigma = update.sigma,update.sa = update.sa,
-                prior.same = prior.same,optimize.eta = FALSE,logw = logw,
-                w = w,sigma = sigma,sa = sa,logodds = logodds,alpha = alpha,
-                mu = mu,s = s,eta = NULL,pip = pip,beta = beta,
-                beta.cov = beta.cov,y = y)
-    class(fit) <- c("varbvs","list")
+      fit <- list(family = family,n0 = n0,sa0 = sa0,mu.cov = mu.cov,
+                  update.sigma = update.sigma,update.sa = update.sa,
+                  prior.same = prior.same,optimize.eta = FALSE,logw = logw,
+                  w = w,sigma = sigma,sa = sa,logodds = logodds,alpha = alpha,
+                  mu = mu,s = s,eta = NULL,pip = pip,beta = beta,
+                  beta.cov = beta.cov,y = y)
+      class(fit) <- c("varbvs","list")
 
-    if (is.null(weights) & is.null(resid.vcov) & ncol(Z) == 1) {
-        
-      # Compute the proportion of variance in Y---only in the
-      # unweighted, i.i.d. case when there are no additional covariates
-      # included in the model.
-      if (verbose)
-        cat("Estimating proportion of variance in Y explained by model.\n");
-      fit$model.pve <- varbvspve(fit,X,nr)
+      if (is.null(weights) & is.null(resid.vcov) & ncol(Z) == 1) {
+          
+        # Compute the proportion of variance in Y---only in the
+        # unweighted, i.i.d. case when there are no additional covariates
+        # included in the model.
 
-      # Compute the proportion of variance in Y explained by each
-      # variable. This can only be estimated in the i.i.d. case when
-      # there are no additional covariates included in the model.
-      fit$pve           <- matrix(0,p,ns)
-      rownames(fit$pve) <- colnames(X)
-      sx                <- var1.cols(X)
-      for (i in 1:ns) 
-        fit$pve[,i] <- sx*(mu[,i]^2 + s[,i])/var1(y)
-    } else {
-      fit$model.pve <- NULL
-      fit$pve       <- NULL
-    }
+        fit$model.pve <- varbvspve(fit,X,nr)
 
-    # Restore the inputted X and y.
-    X <- X + Z %*% SZX
-    y <- y + c(Z %*% SZy)
-  
-    # Compute the fitted values for each hyperparameter setting.
-    fit$fitted.values <- varbvs.linear.predictors(X,Z,family,mu.cov,alpha,mu)
+        # Compute the proportion of variance in Y explained by each
+        # variable. This can only be estimated in the i.i.d. case when
+        # there are no additional covariates included in the model.
+        fit$pve           <- matrix(0,p,ns)
+        rownames(fit$pve) <- colnames(X)
+        sx                <- var1.cols(X)
+        for (i in 1:ns) 
+          fit$pve[,i] <- sx*(mu[,i]^2 + s[,i])/var1(y)
+      } else {
+        fit$model.pve <- NULL
+        fit$pve       <- NULL
+      }
 
-    # Compute the residuals for each hyperparameter setting.
-    fit$residuals <- y - fit$fitted.values
-    fit$residuals.response
-  } else if (family == "binomial") {
-    fit <- list(family = family,n0 = n0,mu.cov = mu.cov,sa0 = sa0,
-                update.sigma = FALSE,update.sa = update.sa,
-                optimize.eta = optimize.eta,prior.same = prior.same,
-                logw = logw,w = w,sigma = NULL,sa = sa,logodds = logodds,
-                alpha = alpha,mu = mu,s = s,eta = eta,pip = pip,beta = beta,
-                beta.cov = beta.cov,pve = NULL,model.pve = NULL)
-    class(fit) <- c("varbvs","list")
-
-    # Compute the fitted values for each hyperparameter setting.
-    fit$fitted.values <-
-      sigmoid(varbvs.linear.predictors(X,Z,family,mu.cov,alpha,mu))
+      # Restore the inputted X and y.
+      X <- X + Z %*% SZX
+      y <- y + c(Z %*% SZy)
     
-    # Compute the "deviance" and "response" residuals for
-    # hyperparameter setting.
-    fit$residuals <-
-      list(deviance = resid.dev.logistic(matrix(y,n,ns),fit$fitted.values),
-           response = y - fit$fitted.values)
-  }
-  
+      # Compute the fitted values for each hyperparameter setting.
+      fit$fitted.values <- varbvs.linear.predictors(X,Z,family,mu.cov,alpha,mu)
+
+      # Compute the residuals for each hyperparameter setting.
+      fit$residuals <- y - fit$fitted.values
+      fit$residuals.response
+  } 
+
   # Add names to some of the outputs.
   hyper.labels                <- paste("theta",1:ns,sep = "_")
   rownames(fit$alpha)         <- colnames(X)
@@ -370,23 +345,27 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
   colnames(fit$mu)            <- hyper.labels
   colnames(fit$s)             <- hyper.labels
   colnames(fit$fitted.values) <- hyper.labels
+  
   if (family == "gaussian") {
-    rownames(fit$residuals) <- rownames(X)
-    colnames(fit$residuals) <- hyper.labels
+      rownames(fit$residuals) <- rownames(X)
+      colnames(fit$residuals) <- hyper.labels
   } else {
-    rownames(fit$eta)                <- rownames(X)
-    colnames(fit$eta)                <- hyper.labels
-    rownames(fit$residuals$deviance) <- rownames(X)
-    rownames(fit$residuals$response) <- rownames(X)
-    colnames(fit$residuals$deviance) <- hyper.labels
-    colnames(fit$residuals$response) <- hyper.labels
+      rownames(fit$eta)                <- rownames(X)
+      colnames(fit$eta)                <- hyper.labels
+      rownames(fit$residuals$deviance) <- rownames(X)
+      rownames(fit$residuals$response) <- rownames(X)
+      colnames(fit$residuals$deviance) <- hyper.labels
+      colnames(fit$residuals$response) <- hyper.labels
   }
+
   if (prior.same)
-    fit$logodds <- c(fit$logodds)
+      fit$logodds <- c(fit$logodds)
   else
-    rownames(fit$logodds) <- colnames(X)
+      rownames(fit$logodds) <- colnames(X)
+
   if (!is.null(fit$pve))
-    colnames(fit$pve) <- hyper.labels
+      colnames(fit$pve) <- hyper.labels
+  
   return(fit)
 }
 
