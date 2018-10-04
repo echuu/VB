@@ -97,10 +97,14 @@ bvs = function(X, y, sigma, sa, logodds,
 		logw[i]    = cavi$vlb
 		sigma[i]   = cavi$sigma
 		sa[i]      = cavi$sa
-		mu.cov[,i] = cavi$post_mean # posterior mean ?
 		alpha[,i]  = cavi$alpha
-		mu[,i]     = cavi$mu        # in q_gamma, this is computed as post. mean
+		mu[,i]     = cavi$mu
 		s[,i]      = cavi$s
+
+		# mu.cov[,i] = cavi$post_mean # posterior mean for "additional" covars
+		# note: for now, we leave out storing this variable -- doesn't affect
+		# the calculations for posterior mean/variance that are described in the
+		# simplest model		
 
 	} # end for()
 
