@@ -98,7 +98,7 @@ bvs = function(X, y, sigma, sa, logodds,
 
 	# (2) Using the initialization chosen in step (1), we run CAVI.
 	#     
-	for (i in 1:B) {
+	for (i in 1:B) {    # beginning of the outer loop of algorithm
 
 		# inner loop -- optimize var lower bound
 		if (length(logodds) == 1) {
