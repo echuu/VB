@@ -139,8 +139,6 @@ normalizeLogWeights = function(logw) {
 
 
 
-
-
 ############## Carbonetto-Stephens Bayesian Variable Selection #################
 
 

@@ -12,6 +12,13 @@
 #          sa      : (1 x 1) PRIOR variance of regression coefficients
 #          logodds : (p x 1) prior log-odds of inclusion for each variable 
 
+## output:
+#          wts       : (B x 1) normalized weights
+#          pip       : (p x 1) probability of inclusion for each of the p coeffs
+#          beta      : (p x 1) expected value of each of the betas
+
+
+
 library(dplyr)
 
 
@@ -62,7 +69,7 @@ bvs = function(X, y, sigma, sa, logodds,
 	#### ----            initialize variational parameters             ---- ####
 	# --------------------------------------------------------------------------
 	alpha = runif_mat(p, B)    # (p x B) estimates of each iter stored col-wise
-	mu    = runif_mat(p, B) 
+	mu    = runif_mat(p, B)    # (p x B) estimates of each iter stored col-wise
 
 
 	# scale the dimensions of the (hyper/variational)-parameters so that we can
@@ -76,6 +83,10 @@ bvs = function(X, y, sigma, sa, logodds,
 	logw = rep(0, B)                   # var. estimate of marginal log-like
 	s    = matrix(0, p, B)             # variance of reg coeffs, stored col-wise
 
+
+	if (length(logodds) == 1) {
+		logodds = rep(logodds, p)
+	}
 
     #### ----                       outer loop                         ---- ####
 	# --------------------------------------------------------------------------
@@ -95,15 +106,12 @@ bvs = function(X, y, sigma, sa, logodds,
 	} # end of initilization for()
 
 
-
 	# (2) Using the initialization chosen in step (1), we run CAVI.
 	#     
 	for (i in 1:B) {    # beginning of the outer loop of algorithm
 
 		# inner loop -- optimize var lower bound
-		if (length(logodds) == 1) {
-			logodds = rep(logodds, p)
-		}
+		
 
 		## details of these updates still need to be figured out..
 		## seems that if we have initialize.params == TRUE, then all starting
@@ -126,11 +134,6 @@ bvs = function(X, y, sigma, sa, logodds,
 		mu[,i]     = cavi$mu
 		s[,i]      = cavi$s
 
-		# mu.cov[,i] = cavi$post_mean # posterior mean for "additional" covars
-		# note: for now, we leave out storing this variable -- doesn't affect
-		# the calculations for posterior mean/variance that are described in the
-		# simplest model		
-
 	} # end of main for() -- logw, alpha, mu are updated, ready for PIP calc.
 
 
@@ -140,7 +143,7 @@ bvs = function(X, y, sigma, sa, logodds,
     beta = c((alpha * mu) %*% w)      # (n x B) (B x 1) -> (p x 1)
 
 	# Prepare output
-	output = list(pip = pip, beta = beta)
+	output = list(wts = w, pip = pip, beta = beta)
 	return(output)
 
 } # end of bvs() function
