@@ -46,23 +46,10 @@ bvs = function(X, y, sigma, sa, logodds,
 	#### ----                  preprocess variables                    ---- ####
 	# --------------------------------------------------------------------------
 
-	# create intercept
-	Z = matrix(1, n, 1)
-
-    # Adjust the inputs X and y so that the linear effects of the
-    # covariates (Z) are removed. This is equivalent to integrating
-    # out the regression coefficients corresponding to the covariates
-    # with respect to an improper, uniform prior.	
-
-    new_Xy = processXy(X, y, Z)
-
-    # for initial applications, Z will be the intercept, so the resulting X will
-    # just be the centered version, and y = y - mean(y)
-    X   = new_Xy$X
-    y   = new_Xy$y 
-    
-    SZX = new_Xy$SZX    # only used if there are additional covariates
-	SZy = new_Xy$SZy    # only used if there are additional covariates
+    # resulting X will just be the centered version, and y = y - mean(y)
+    new_Xy = processXy(X, y)
+    X      = new_Xy$X
+    y      = new_Xy$y 
 
     rm(new_Xy)
 
@@ -98,6 +85,10 @@ bvs = function(X, y, sigma, sa, logodds,
 	for (i in 1:B) {
 
 
+		## first run through of algorithm to find optimal variational
+		## parameter settings for more accurate posterior estimates
+
+
 
 		## find the iteration with parameters that maximized the VLB
 		## store these parameters in alpha, mu, sigma (*), sa (*)
@@ -113,11 +104,23 @@ bvs = function(X, y, sigma, sa, logodds,
 		# inner loop -- optimize var lower bound
 		
 
+		## 10/5 questions/confusions:
 		## details of these updates still need to be figured out..
 		## seems that if we have initialize.params == TRUE, then all starting
 		## values of alpha[,i], mu[,i] will all be the same, which would result
 		## in the same updates stored in each iteration, which would defeat the
 		## purpose of iterating through cavi B times
+
+		## 10/8 update: 
+		## we do want to be using the same INITIALIZATION for the variational
+		## parameters, but these updates will change because the 
+		## hyperparameter settings are different for each of the B iterations
+		## (see 2nd paragraph on p. 82 of C&S (2012))
+		## since they are sampled from an importance density (where this done?)
+
+		## follow up question:
+		## where in this process have we sampled the hyperparmeters from the
+		## importance density mentioned in the paper? 
 
 		cavi = q_gamma(X, y, sigma[i] sa[i], logodds[i], alpha[,i], mu[,i]) 
 

@@ -43,6 +43,8 @@ vbUpdate = function(X, sigma, sa, logodds, xy, d, alpha0, mu0, Xr0) {
         mu[j] = s / sigma * (xy[j] + d[j] * r - sum(X[, j] * Xr))
 
         # variational estimate of the posterior inclusion probability.
+
+        ## one of these log updates should be scaled by log(10)
         logBF    = (log(s / (sa * sigma)) + mu[j]^2 / s) / 2 # double check this update
         alpha[j] = sigmoid(logodds[j] + logBF)
 
