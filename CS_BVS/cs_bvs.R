@@ -156,8 +156,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
         out <- remove.covariate.effects(X,Z,y)
         X   <- out$X
         y   <- out$y
-        SZy <- out$SZy
-        SZX <- out$SZX
         rm(out)
 
     } # end of if (gaussian)
@@ -183,7 +181,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
     # which includes the intercept.
     logw   <- rep(0,ns)
     s      <- matrix(0,p,ns)
-    mu.cov <- matrix(0,ncol(Z),ns)
                      
     # (5) FIT BAYESIAN VARIABLE SELECTION MODEL TO DATA
     # -------------------------------------------------
@@ -232,8 +229,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
                 sigma[i]   <- out$sigma
                 sa[i]      <- out$sa
 
-                mu.cov[,i] <- out$mu.cov # not used 
-
                 alpha[,i]  <- out$alpha
                 mu[,i]     <- out$mu
                 s[,i]      <- out$s
@@ -250,8 +245,15 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
             
             if (update.sigma)               # hyperparameters update
               sigma = rep(sigma[i],ns)      # update variance of residual
+                                            # all hyperparams same (??) why
             if (update.sa)                 
               sa = rep(sa[i],ns)            # update (scaled) variance of coeffs
+
+
+              ## if both of the if() statements above execute, then every iter
+              ## of the main loop below will use the same variational parameters
+              ## and the same hyperparameters, which doesn't quite make sense
+
 
         } # end of if (initialize.param) chunk
 
@@ -264,15 +266,11 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
         for (i in 1:ns) {
             out <- outerloop(X, Z, y, family, weights, resid.vcov, SZy, SZX, 
                              sigma[i],sa[i], logodds[,i], alpha[,i], mu[,i], 
-                             eta[,i], update.order, tol, maxiter, verbose, i,
+                             update.order, tol, maxiter, verbose, i,
                              update.sigma, update.sa, optimize.eta, n0, sa0)
             logw[i]    <- out$logw
             sigma[i]   <- out$sigma
             sa[i]      <- out$sa
-            mu.cov[,i] <- out$mu.cov # these correspond to the betas, not in 
-                                     # most basic model -- exclude? PIP does not
-                                     # involve these in the calculation (below)
-                                     # something to clarify *******************
 
 
             # for each iteration, we update the hyperparameters
@@ -308,58 +306,11 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
         beta.cov <- c(mu.cov %*% w)
     }
 
-    if (family == "gaussian") {
-        fit <- list(family = family,n0 = n0,sa0 = sa0,mu.cov = mu.cov,
-                    update.sigma = update.sigma,update.sa = update.sa,
-                    prior.same = prior.same,optimize.eta = FALSE,logw = logw,
-                    w = w,sigma = sigma,sa = sa,logodds = logodds,alpha = alpha,
-                    mu = mu,s = s,eta = NULL,pip = pip,beta = beta,
-                    beta.cov = beta.cov,y = y)
-        class(fit) <- c("varbvs","list")
-
-        if (is.null(weights) & is.null(resid.vcov) & ncol(Z) == 1) {
-            
-            # Compute the proportion of variance in Y---only in the
-            # unweighted, i.i.d. case when there are no additional covariates
-            # included in the model.
-
-            fit$model.pve <- varbvspve(fit,X,nr)
-
-            # Compute the proportion of variance in Y explained by each
-            # variable. This can only be estimated in the i.i.d. case when
-            # there are no additional covariates included in the model.
-            fit$pve           <- matrix(0,p,ns)
-            rownames(fit$pve) <- colnames(X)
-            sx                <- var1.cols(X)
-            for (i in 1:ns) 
-              fit$pve[,i] <- sx*(mu[,i]^2 + s[,i])/var1(y)
-        } 
-
-        # Restore the inputted X and y.
-        X <- X + Z %*% SZX
-        y <- y + c(Z %*% SZy)
-      
-        # Compute the fitted values for each hyperparameter setting.
-        fit$fitted.values = varbvs.linear.predictors(X,Z,family,mu.cov,alpha,mu)
-
-        # Compute the residuals for each hyperparameter setting.
-        fit$residuals = y - fit$fitted.values
-        fit$residuals.response
-
-    } # end if ("gaussian") chunk 
-
-    if (family == "gaussian") {
-        rownames(fit$residuals) <- rownames(X)
-        colnames(fit$residuals) <- hyper.labels
-    } 
-
     if (prior.same)
         fit$logodds <- c(fit$logodds)
     else
         rownames(fit$logodds) <- colnames(X)
 
-    if (!is.null(fit$pve))
-        colnames(fit$pve) <- hyper.labels
     
     return(fit)
 }

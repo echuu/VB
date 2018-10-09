@@ -102,7 +102,6 @@ bvs = function(X, y, sigma, sa, logodds,
 	for (i in 1:B) {    # beginning of the outer loop of algorithm
 
 		# inner loop -- optimize var lower bound
-		
 
 		## 10/5 questions/confusions:
 		## details of these updates still need to be figured out..
@@ -121,6 +120,14 @@ bvs = function(X, y, sigma, sa, logodds,
 		## follow up question:
 		## where in this process have we sampled the hyperparmeters from the
 		## importance density mentioned in the paper? 
+
+		## 10/9 update:
+		## paper says that we use grid points for candidate values for theta
+		## since the values of the variational parameters depend on these values
+		## of theta, using the same initialization for the variational params
+		## (which is done in the initial run), will not necessarily result
+		## in the exact same cavi outputs, due to convergence to local optima
+
 
 		cavi = q_gamma(X, y, sigma[i] sa[i], logodds[i], alpha[,i], mu[,i]) 
 

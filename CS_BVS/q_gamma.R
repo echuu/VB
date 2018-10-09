@@ -20,18 +20,18 @@
 ## output:
 #          logw    : (iter x 1) variational estimate of the marginal log-like
 #          err     : (iter x 1) diff between alphas between iterations
-#          sigma   : (1 x 1)    
-#          sa      : (1 x 1)    
-#          alpha   : (p x 1)    
-#          mu      : (p x 1)    
-#          s       : (s x 1)
+#          sigma   : (1 x 1)    updated (if asked) variance of residual
+#          sa      : (1 x 1)    updated (if asked) variance of reg. coeff
+#          alpha   : (p x 1)    updated alpha (see above input description)
+#          mu      : (p x 1)    updated mu    (see above input description)
+#          s       : (s x 1)    updated posterior variance
 
 
 ## notes on output:
-# q_gamma is called once per iteration of the outer loop, outputting an alpha
-# per iteration. These alpha's (each is a p-dimensional vector) are weighted
-# to get a Monte Carlo estimate of the posterior inclusion probability of each
-# of the regression coefficients
+## q_gamma is called once per iteration of the outer loop, outputting an alpha
+## per iteration. These alpha's (each is a p-dimensional vector) are weighted
+## to get a Monte Carlo estimate of the posterior inclusion probability of each
+## of the regression coefficients
 
 
 ## quantities that are calculated within the code:
