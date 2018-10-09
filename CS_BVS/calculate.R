@@ -126,6 +126,38 @@ varLB = function(Xr, d, y, sigma, alpha, mu, s, logodds, sa) {f
 } # end of varLB() function
 
 
+## input:  user input versions of logodds, sigma, sa;
+##         B is the number of iterations that the algorithm is run
+##         p is the dimension of the coefficient vector
+## output: logodds (p x B), sigma (B x 1), sa (B x 1)
+processHyper = function(logodds, sigma, sa, B, p) {
+	## convert logodds into matrix form
+	if (length(logodds) == 1) {
+		logodds = rep(logodds, p)
+	}
+
+	if (!ismatrix(logodds)) {
+		logodds = t(matrix(logodds))
+	}
+
+	if (ncol(logodds) == 1) {
+		logodds = rep.col(logodds, B)
+	}
+
+	if (length(sigma) == 1) {
+		sigma <- rep(sigma, B)
+	}
+
+	if (length(sa) == 1) {
+		sa = rep(sa, B)
+	}
+
+	checkHyperDims(logodds, sigma, sa, B, p) # check dimensions of hyperparams
+	
+	return(list(logodds, sigma, sa))
+}
+
+
 #### ---- normalizeLogWeights() ---- ####
 # input:  logw : vector of log probabilities
 # output: vector of normalized probabilities (sum to 1)

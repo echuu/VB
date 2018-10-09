@@ -197,7 +197,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
         logw     <- out$logw
         sigma    <- out$sigma
         sa       <- out$sa
-        mu.cov[] <- out$mu.cov
         alpha[]  <- out$alpha
         mu[]     <- out$mu
         s[]      <- out$s

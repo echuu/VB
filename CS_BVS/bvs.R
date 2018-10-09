@@ -6,6 +6,10 @@
 ## the posterior inclusion probability of the regression coefficients
 
 
+## hyperparameters: sigma, sa
+## variational parameters: alpha, mu, s
+
+
 ## input:
 #          X       : (n x p) design matrix, n is # of obs, p is # of variables
 #          sigma   : (1 x 1) variance of the RESIDUAL
@@ -63,7 +67,7 @@ bvs = function(X, y, sigma, sa, logodds,
 	# index into them as vectors
 
 	
-	#### ----                  preprocess variables                    ---- ####
+	#### ----          preprocess output and hyperparameters           ---- ####
 	# --------------------------------------------------------------------------	
 
 	# initialize output variables
@@ -71,9 +75,12 @@ bvs = function(X, y, sigma, sa, logodds,
 	s    = matrix(0, p, B)             # variance of reg coeffs, stored col-wise
 
 
-	if (length(logodds) == 1) {
-		logodds = rep(logodds, p)
-	}
+	hyper   = processHyper(logodds)
+	logodds = hyper$logodds            # p x B matrix
+	sigma   = hyper$sigma			   # B x 1 vector
+	sa      = hyper$sa                 # B x 1 vector
+
+	
 
     #### ----                       outer loop                         ---- ####
 	# --------------------------------------------------------------------------
@@ -87,18 +94,39 @@ bvs = function(X, y, sigma, sa, logodds,
 
 		## first run through of algorithm to find optimal variational
 		## parameter settings for more accurate posterior estimates
+		cavi_0 = q_gamma(X, y, sigma[i], sa[i], logodds[,i], alpha[,i], mu[,i])
 
+		logw[i]   = cavi_0$logw
 
+		sigma[i]  = cavi_0$sigma
+		sa[i]     = cavi_0$sa
+
+		alpha[,i] = cavi_0$alpha
+		mu[,i]    = cavi_0$mu
+		s[,i]     = cavi_0$s
 
 		## find the iteration with parameters that maximized the VLB
 		## store these parameters in alpha, mu, sigma (*), sa (*)
 		## (*): if update.sigma == TRUE
+		i_max = which.max(logw)
+		alpha = rep.col(alpha[, i_max], B) # repeat optimal alpha for all inits
+		mu    = rep.col(mu[, i_max], B)    # repeat optimal mu for all inits
+
+
+		if (update.sigma) {
+			sigma = rep(sigma[i], B) # repeat same sigma for all B iterations
+		}                            # doesn't result in identitcal results for
+		                             # each of the B iterations in the
+		                             # subsequent for loop ??
+
+		if (update.sa) {
+			sa = rep(sa[i], B)       # same concern/question as above
+		}                             
 
 	} # end of initilization for()
 
 
 	# (2) Using the initialization chosen in step (1), we run CAVI.
-	#     
 	for (i in 1:B) {    # beginning of the outer loop of algorithm
 
 		# inner loop -- optimize var lower bound
@@ -129,7 +157,7 @@ bvs = function(X, y, sigma, sa, logodds,
 		## in the exact same cavi outputs, due to convergence to local optima
 
 
-		cavi = q_gamma(X, y, sigma[i] sa[i], logodds[i], alpha[,i], mu[,i]) 
+		cavi = q_gamma(X, y, sigma[i], sa[i], logodds[i], alpha[,i], mu[,i]) 
 
 		#####       ----   store updates for i-th iteration    ----         ####
 

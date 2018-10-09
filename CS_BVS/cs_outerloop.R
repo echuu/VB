@@ -15,6 +15,8 @@ outerloop <- function (X, Z, y, family, weights, resid.vcov, SZy, SZX, sigma,
 
       # Optimize the variational lower bound for the Bayesian variable
       # selection model.
+
+      # varbvsnorm is what we call q_gamma()
       out <- varbvsnorm(X,y,sigma,sa,log(10)*logodds,alpha,mu,update.order,
                         tol,maxiter,verbose,outer.iter,update.sigma,update.sa,
                         n0,sa0)

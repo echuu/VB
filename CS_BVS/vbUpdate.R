@@ -32,7 +32,6 @@ vbUpdate = function(X, sigma, sa, logodds, xy, d, alpha0, mu0, Xr0) {
     mu    = mu0
     Xr    = Xr0
 
-    # CAVI updates 
     for (j in updates) {
 
         # posterior variance

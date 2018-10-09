@@ -33,6 +33,19 @@ checkInitialInput = function(X, y, sigma, sa, logodds, n, p) {
 
 
 
+# check that after processing the hyperparameters, they are:
+# logodds: p x B
+# sigma  : B x 1
+# sa     : B x 1
+checkHyperDims = function(logodds, sigma, sa, B, p) {
+	if (length(sigma) != B | length(sa) != B | 
+		ncol(logodds) != B | nrow(logodds) != p) {
+		stop("Dimensions of hyperparameters is incompatible")
+	} 
+} # end of checkHyperDims() function
+
+
+
 
 
 
