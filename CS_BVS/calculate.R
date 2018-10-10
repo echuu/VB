@@ -39,6 +39,14 @@ runif_mat = function (m, n) {
 } # end of runif_mat() function
 
 
+# Replicate vector x to create an m x n matrix, where m = length(x).
+##### ---- rep_col() ---- #### 
+# input:  x  : m-dimensional vector
+#         n  : # of times to replicate the column vector x
+# output: (m x n) matrix where x is repeated column-wise n times
+rep_col <- function (x, n) {
+	return(matrix(x, length(x), n, byrow = FALSE))
+} # end of rep_col() function
 
 
 #### ---- var_ss() ---- ####
@@ -127,30 +135,37 @@ varLB = function(Xr, d, y, sigma, alpha, mu, s, logodds, sa) {f
 
 
 ## input:  user input versions of logodds, sigma, sa;
-##         B is the number of iterations that the algorithm is run
+##         B is the number of candidate hyperparameters, dictates dimensions
 ##         p is the dimension of the coefficient vector
-## output: logodds (p x B), sigma (B x 1), sa (B x 1)
+## output: logodds (p x B) or (1 x B), sigma (1 x B), sa (1 x B)
 processHyper = function(logodds, sigma, sa, B, p) {
-	## convert logodds into matrix form
-	if (length(logodds) == 1) {
-		logodds = rep(logodds, p)
-	}
-
-	if (!ismatrix(logodds)) {
-		logodds = t(matrix(logodds))
-	}
-
-	if (ncol(logodds) == 1) {
-		logodds = rep.col(logodds, B)
-	}
+	
 
 	if (length(sigma) == 1) {
 		sigma <- rep(sigma, B)
 	}
-
 	if (length(sa) == 1) {
 		sa = rep(sa, B)
 	}
+
+	## all of the following if() statements will execute if logodds is a scalar
+	## keep them separate for now, since we are (perhaps incorrectly?)
+	## assuming that the vector that is passed in must be 1 x 1 if we are to
+	## apply the prior uniformy across all the variables, i.e., if logodds is
+	## not passed in as a matrix, then it must be a 1 x 1 vector (scalar)
+
+	if (length(logodds) == 1) {
+		logodds = rep(logodds, p)       
+	}
+
+	if (!ismatrix(logodds)) {           # if input for logodds is SCALAR
+		logodds = t(matrix(logodds))    # prior is applied unif to all variables
+	}                                   # use matrix form for syntax conformity
+
+	if (ncol(logodds) == 1) {           # if input for logodds is SCALAR, then
+		logodds = rep_col(logodds, B)   # prev. step will result in 1x1 matrix
+	} 									# * logodds is (1 x B) after this step *
+
 
 	checkHyperDims(logodds, sigma, sa, B, p) # check dimensions of hyperparams
 	

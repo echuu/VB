@@ -14,7 +14,8 @@
 #          X       : (n x p) design matrix, n is # of obs, p is # of variables
 #          sigma   : (1 x 1) variance of the RESIDUAL
 #          sa      : (1 x 1) PRIOR variance of regression coefficients
-#          logodds : (p x 1) prior log-odds of inclusion for each variable 
+#          logodds : (p x 1) prior log-odds of inclusion for each variable
+#          n_ps    : (1 x 1) number of samples from the posterior 
 
 ## output:
 #          wts       : (B x 1) normalized weights
@@ -27,7 +28,7 @@ library(dplyr)
 
 
 bvs = function(X, y, sigma, sa, logodds,
-	           update.sigma, update.sa, B = 100, sa0 = 1, n0 = 10,
+	           update.sigma, update.sa, n_ps = 100, sa0 = 1, n0 = 10,
 	           tol = 1e-4, maxiter = 1e4) {
 
     n = nrow(X)
@@ -57,28 +58,28 @@ bvs = function(X, y, sigma, sa, logodds,
 
     rm(new_Xy)
 
+	#### ----          preprocess output and hyperparameters           ---- ####
+	# --------------------------------------------------------------------------
+
+	# B = # of times the main for loop iterates
+    #   = the number of CANDIDATE hyperparameters
+    # this number dictates the number of columns in the storage data structures
+    # (defined as ns in C&S code)
+
+	B = max(length(sigma), length(sa), ncol(logodds))
+
+	hyper   = processHyper(logodds, sigma, sa, B, p)
+	logodds = hyper$logodds            # 1 x B if input was scalar, else: p x B
+	sigma   = hyper$sigma			   # B x 1 vector
+	sa      = hyper$sa                 # B x 1 vector
+
+
 	#### ----            initialize variational parameters             ---- ####
 	# --------------------------------------------------------------------------
 	alpha = runif_mat(p, B)    # (p x B) estimates of each iter stored col-wise
-	mu    = runif_mat(p, B)    # (p x B) estimates of each iter stored col-wise
-
-
-	# scale the dimensions of the (hyper/variational)-parameters so that we can
-	# index into them as vectors
-
-	
-	#### ----          preprocess output and hyperparameters           ---- ####
-	# --------------------------------------------------------------------------	
-
-	# initialize output variables
-	logw = rep(0, B)                   # var. estimate of marginal log-like
-	s    = matrix(0, p, B)             # variance of reg coeffs, stored col-wise
-
-
-	hyper   = processHyper(logodds)
-	logodds = hyper$logodds            # p x B matrix
-	sigma   = hyper$sigma			   # B x 1 vector
-	sa      = hyper$sa                 # B x 1 vector
+	mu    = runif_mat(p, B)    # (p x B) estimates of each iter stored col-wise	
+	logw  = rep(0, B)                   # var. estimate of marginal log-like
+	s     = matrix(0, p, B)             # variance of reg coeffs, stored col-wise
 
 	
 

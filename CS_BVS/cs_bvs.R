@@ -14,29 +14,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
 
     # (1) CHECK INPUTS
     # ----------------
-    # Check input Z.
-    if (!is.null(Z)) {
-      Z <- as.matrix(Z)
-      if (!is.numeric(Z) | sum(is.na(Z)) > 0)
-        stop("Input Z must be a numeric matrix with no missing values.")
-      if (nrow(Z) != n)
-        stop("Inputs X and Z do not match.")
-      storage.mode(Z) <- "double"
-    }
-    
-    # Add intercept.
-    if (is.null(Z))
-      Z <- matrix(1,n,1)
-    else
-      Z <- cbind(1,Z)
-
-    # Get choice of regression model.
-    family <- match.arg(family)
-
-    # (2) PROCESS OPTIONS
-    # -------------------
-    if (!is.finite(maxiter))
-      stop("Input maxiter must be a finite number")
     
     # Get candidate settings for the variance of the residual (sigma),
     # if provided. Note that this option is not valid for a binary trait.
@@ -86,7 +63,12 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
 
     # Here is where I ensure that the numbers of candidate hyperparameter
     # settings are consistent.
+
+    # ns is the number of times the main for loop iterates
+    # = the number of hyperparameters
+    # this number dictates the number of columns in the storage data structures
     ns <- max(length(sigma),length(sa),ncol(logodds))
+    
     if (length(sigma) == 1)
       sigma <- rep(sigma,ns)
     if (length(sa) == 1)
@@ -95,20 +77,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
       logodds <- rep.col(logodds,ns)
     if (length(sigma) != ns | length(sa) != ns | ncol(logodds) != ns)
       stop("options.sigma, options.sa and options.logodds are inconsistent")
-
-
-    # Set the weights---used to indicate that different observations
-    # have different variances---or the covariance matrix of the
-    # residual (resid.vcov). Note that only one of the weights and
-    # residual covariance matrix can be non-NULL.
-    if (missing(weights))
-      weights <- NULL
-    if (missing(resid.vcov)) 
-      resid.vcov <- NULL
-    
-
-    ### ** NOTE: if resid.vcov not passed in, then it is SET TO NULL HERE **  ##
-
 
     # Set initial estimates of variational parameter alpha.
     initialize.params.default <- TRUE
@@ -165,12 +133,6 @@ varbvs <- function (X, Z, y, family = c("gaussian","binomial"), sigma, sa,
         rownames(X) <- 1:n
     if (is.null(colnames(X)))
         colnames(X) <- paste0("X",1:p)
-
-    # Add column names to Z if they are not already provided.
-    if (is.null(colnames(Z)) & ncol(Z) > 1)
-        colnames(Z) <- c("(Intercept)",paste0("Z",1:(ncol(Z) - 1)))
-    else
-        colnames(Z)[1] <- "(Intercept)"
     
     # (4) INITIALIZE STORAGE FOR THE OUTPUTS
     # --------------------------------------
