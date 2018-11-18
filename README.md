@@ -1,4 +1,3 @@
-
 Implementation of various Bayesian Variable Selection Techniques
 
 CB_BVS: implementation of BVS method discussed in Carbonetto and Stephens (2012)
